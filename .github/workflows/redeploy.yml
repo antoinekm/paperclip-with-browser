@@ -1,0 +1,29 @@
+name: Weekly redeploy
+
+# Triggers a Coolify redeploy so the wrapper image is rebuilt against the
+# latest ghcr.io/paperclipai/paperclip:${BASE_TAG} (default `latest`).
+# Without this, the image only updates when we push a commit here, which
+# can lag upstream Paperclip releases by weeks.
+
+on:
+  schedule:
+    - cron: '0 6 * * 1'  # Mondays 06:00 UTC
+  workflow_dispatch:
+
+jobs:
+  redeploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Coolify deploy
+        env:
+          COOLIFY_URL: ${{ secrets.COOLIFY_URL }}
+          COOLIFY_TOKEN: ${{ secrets.COOLIFY_TOKEN }}
+          COOLIFY_UUID: ${{ secrets.COOLIFY_UUID }}
+        run: |
+          set -euo pipefail
+          : "${COOLIFY_URL:?missing}"
+          : "${COOLIFY_TOKEN:?missing}"
+          : "${COOLIFY_UUID:?missing}"
+          curl -fsSL --max-time 30 -X GET \
+            -H "Authorization: Bearer $COOLIFY_TOKEN" \
+            "$COOLIFY_URL/api/v1/deploy?uuid=$COOLIFY_UUID&force=true"
