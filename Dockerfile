@@ -9,12 +9,14 @@
 ARG BASE_TAG=latest
 FROM ghcr.io/paperclipai/paperclip:${BASE_TAG}
 
-# Install Chromium and the runtime libs it needs. We stay as root because the
+# Install Chromium and the runtime libs it needs, plus postgresql-client so
+# agents can run psql/pg_dump against managed databases (the Coolify MCP only
+# exposes read-only inspect tools, no terminal). We stay as root because the
 # upstream image's entrypoint already drops to the `node` user via gosu, and
 # the OS-level binaries we add must be owned by root.
 USER root
 RUN apt-get update \
-  && apt-get install -y --no-install-recommends chromium \
+  && apt-get install -y --no-install-recommends chromium postgresql-client \
   && rm -rf /var/lib/apt/lists/*
 
 # Chromium's user-namespace sandbox cannot initialize inside a non-privileged
